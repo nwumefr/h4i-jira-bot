@@ -2,10 +2,17 @@ import discord
 from discord.ext import commands
 import os
 import dotenv
-from utils.ticket import Ticket
+from utils.pydantic_models import Ticket, TicketRequest
 from uuid import uuid4, UUID
-
+import aiohttp
+import asyncio
+import logging
+import datetime
+import json
 dotenv.load_dotenv()
+
+# logging
+logger = logging.getLogger('main-logger')
 
 # Set up the bot
 intents = discord.Intents.default()
@@ -29,7 +36,8 @@ async def on_message(message):
     new_ticket = Ticket(
         id=str(uuid4()),
         issuer=str(message.author),
-        content=str(message.content),)
+        content=str(message.content),
+        date_started=str(datetime.datetime.now()))
 
     embed = discord.Embed(
         title=f"Ticket ID #{new_ticket.id}",
@@ -45,7 +53,16 @@ async def on_message(message):
         f"Hello!, you said {message.content}", 
         mention_author=False,
         embed=embed)
-
+    
+    # attempt to send ticket to engine microservice
+    url = "http://localhost:5000/push"  
+    payload = new_ticket.model_dump()
+    logger.info('trying to push ticket')
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload) as response:
+            print("Status:", response.status)
+            data = await response.json()
+            print("Response:", data)
     # Allow commands to still work
     await bot.process_commands(message)
 
