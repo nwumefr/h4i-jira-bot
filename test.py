@@ -37,3 +37,5 @@ payload = CompleteRequest(
 ).model_dump()
 # complete the ticket
 res = handle_endpoint('/complete',payload)
+
+print(requests.get(surl+'/pile/completions').json())

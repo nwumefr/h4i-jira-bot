@@ -12,7 +12,7 @@ class Engine:
         self._ticket_store = {}
         # for fatsapi since Tickets arent json serializable
         self._ticket_store_json = {}
-
+        self._backlog_json = {}
         # if a task gets taken on it gets added 
         # to the in progress bucket where we can
         # track the status
@@ -55,6 +55,8 @@ class Engine:
             completion_content=content
         )
         self._backlog[ticket_id] = completion
+        self._backlog_json[ticket_id] = completion.model_dump()
+        # remove from in_progress pile
         self._in_progress.pop(ticket_id)
         return self._backlog[ticket_id]
     
@@ -63,6 +65,9 @@ class Engine:
     
     def get_completion(self,ticket_id)->TicketCompletion:
         return self._backlog[ticket_id]
+    
+    def get_completions(self):
+        return self._backlog_json
     
     # function to set ticket status to started
     def start_ticket(self,ticket_id:str):

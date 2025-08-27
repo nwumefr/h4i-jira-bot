@@ -42,7 +42,14 @@ async def load_ticket(id:str):
     engine:Engine = app.state.engine
     # convert ticket bucket into list of json
     curr = engine.get_ticket(id)
-    return JSONResponse({'tickets':curr.model_dump()})
+    return JSONResponse({'ticket':curr.model_dump()})
+
+@app.get('/pile/completions')
+async def load_completions():
+    engine:Engine = app.state.engine
+    # convert ticket bucket into list of json
+    curr = engine.get_completions()
+    return JSONResponse({'completions':curr})
 
 # assign ticket to someone
 @app.post('/assign')
