@@ -35,7 +35,7 @@ async def add_ticket(data: Ticket):
 async def load_pile():
     engine:Engine = app.state.engine
     # convert ticket bucket into list of json
-    return JSONResponse({'tickets':engine._ticket_store_json})
+    return JSONResponse({'tickets':engine.get_queue()})
 
 @app.get('/pile/ticket/')
 async def load_ticket(id:str):

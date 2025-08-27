@@ -4,11 +4,12 @@ from utils.pydantic_models import Ticket,TicketCompletion
 from uuid import UUID
 import copy
 import datetime
-from typing import Union
+from typing import Union, List
 
 class Engine:
     def __init__(self):
         # queue to handle priority for tickets
+        self._queue:List[Ticket] = []
         self._ticket_store = {}
         # for fatsapi since Tickets arent json serializable
         self._ticket_store_json = {}
@@ -25,7 +26,16 @@ class Engine:
         # add to ticket bucket
         self._ticket_store[ticket.id] = ticket
         self._ticket_store_json[ticket.id] = ticket.model_dump()
+        self._queue.append(ticket)
 
+    def get_queue(self,limit:int=10):
+        lim = limit
+        que = []
+        for i in self._queue:
+            tid = i.id
+            tick = self.get_ticket(tid)
+            que.append(tick.model_dump())
+        return que
     
     def assign_ticket(self,ticket_id:str,assigned_to:str):
         # remove from ticket bucket and move to inprogress
@@ -58,11 +68,24 @@ class Engine:
         self._backlog_json[ticket_id] = completion.model_dump()
         # remove from in_progress pile
         self._in_progress.pop(ticket_id)
+        self._queue.pop(0)
         return self._backlog[ticket_id]
     
-    def get_ticket(self,ticket_id)->Ticket:
+    def get_ticket(self,ticket_id)->Ticket:\
+        # try if the ticket is complete
+        try:
+            return self._backlog[ticket_id]
+        except Exception as e:
+            # not complete
+            pass
+        # try if the ticket is in progress
+        try:
+            return self._in_progress[ticket_id]
+        except Exception as e:
+            # not complete
+            pass
         return self._ticket_store[ticket_id]
-    
+
     def get_completion(self,ticket_id)->TicketCompletion:
         return self._backlog[ticket_id]
     

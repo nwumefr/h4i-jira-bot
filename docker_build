@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e  # Exit on any error
+
+# Configuration
+IMAGE_NAME="h4i-jira-engine"             # Name for the Docker image
+DOCKERFILE="build/dev/Dockerfile"        # Path to your Dockerfile
+CONTEXT="."                              # Build context
+ENV_FILE=".env"                          # Path to your environment file
+CONTAINER_NAME="h4i-jira-engine-container"  # Name for the container
+
+# Build the Docker image
+echo "Building Docker image: $IMAGE_NAME"
+docker build -f "$DOCKERFILE" -t "$IMAGE_NAME" "$CONTEXT"
+
+# Remove existing container if it exists
+if [ "$(docker ps -aq -f name=^${CONTAINER_NAME}$)" ]; then
+    echo "Removing existing container: $CONTAINER_NAME"
+    docker rm -f "$CONTAINER_NAME"
+fi
+
+# Run the Docker container
+echo "Running Docker container: $CONTAINER_NAME"
+docker run -d \
+  --name "$CONTAINER_NAME" \
+  --env-file "$ENV_FILE" \
+  --add-host docker.internal:host-gateway \
+  -p 5000:5000 \
+  "$IMAGE_NAME"
+
+echo "Container $CONTAINER_NAME is up and running!"
